@@ -44,7 +44,7 @@ def segment():
         return "no file"
 
     file = flask.request.files['file']
-    type(file)
+    print(type(file))
     # print(file)
 
     if file.filename == '':
@@ -54,7 +54,6 @@ def segment():
         filename = file.filename
         file.save("./input/"+filename)
         res = prdct("./input/"+filename,session,model2)
-        print(res)
         return res
 
 
