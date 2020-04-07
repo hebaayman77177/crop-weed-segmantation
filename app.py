@@ -5,23 +5,22 @@ import pandas as pd
 import os
 import sys
 import json
-from keras.models import load_model
-from keras.models import model_from_json
-from keras.preprocessing.image import load_img,img_to_array
+import tensorflow as tf
+from tensorflow.keras.models import load_model
+from tensorflow.keras.models import model_from_json
+from tensorflow.keras.preprocessing.image import load_img,img_to_array
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
 from os import listdir
 from os.path import isfile, join
 from predict import prdct
-import tensorflow as tf
 from tensorflow.python.keras.backend import set_session
 
 
 
 app = flask.Flask(__name__,template_folder='templates')
 
-session = tf.Session(graph=tf.Graph())
+session =  tf.compat.v1.Session(graph=tf.Graph())
 with session.graph.as_default():
     set_session(session)
     with open('model/model_in_json.json','r') as f:
@@ -60,4 +59,4 @@ def segment():
 
 
 if __name__ == "__main__":
-   app.run()
+   app.run(host='0.0.0.0')

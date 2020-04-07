@@ -1,7 +1,6 @@
-FROM python:3.6-slim
+FROM python:3.6
 WORKDIR /usr/src/app
 COPY . .
-RUN pip3 install pipenv
-RUN pipenv install
+RUN pip install -r ./requirements.txt
 EXPOSE 5000
-CMD ["pipenv", "run", "python", "api.py"]
+CMD [ "python", "app.py"]
