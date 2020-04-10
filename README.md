@@ -1,120 +1,86 @@
 # About the project
-Udagram is a simple cloud application developed alongside the Udacity Cloud Engineering Nanodegree. It allows users to register and log into a web client, post photos to the feed, and process photos using an image filtering microservice. Following are the services involved in this project:
 
-* “user” - allows users to register and log into a web client,
-* “feed” - allows users to post photos, and process photos using image filtering
-* “frontend” - acts as an interface between the user and the backend-services
-* "reverseproxy" - For resolving multiple services running on same port in separate containers
+The project consists of two parts:
+- First generate the model that segment a crop weed images
+- Second deploy the model as a microservice on a kubernetes cluster on AWS
 
-Correspondingly, the project is split into following parts:
-1. The RestAPI Feed Backend, a Node-Express feed microservice.
-1. The RestAPI User Backend, a Node-Express user microservice.
-1. The Simple Frontend - A basic Ionic client web application which consumes the RestAPI Backend.
-1. Nginx as a reverse-proxy server, when different backend services are running on the same port, then a reverse proxy server directs client requests to the appropriate backend server and retrieves resources on behalf of the client.  
+for the first part Unet is trained on the data,
+there were inconsistant of the training data also there were only 60 image
+so two approaches were tried:
+- first we tried to relabeling them automatically by detecting the areas of weed as they occupy large area while crop is thin using Dilation and Erosion
+- the second approach is to relabeling them manually which gives better results
+
+
+this part exists in crop_weed_segmantation.ipynb notebook
+
+for the second part:
+- I made an API to predict from the model in a flask app
+- Then containerized it
+- Then deploy it on a kubernetes cluster
+
 
 
 ##  How to setup and deploy the project
 
 
-### 1. Pull the images
+### 1. Pull the image
 ```
-docker pull hebaayman77177/udacity-restapi-feed:latest
-docker pull hebaayman77177/udacity-frontend:latest
-docker pull hebaayman77177/udacity-restapi-user:latest
-docker pull hebaayman77177/reverseproxy:latest
+docker pull hebaayman77177/crop-weed-segmantation2:latest
 ```
 ### 2. To run
 
-configure your environment variable
-```
-export PATH=$PATH:/usr/local/mysql/bin/
-export POSTGRESS_USERNAME=myusername;
-export POSTGRESS_PASSWORD=mypassword;
-export POSTGRESS_DB=postgres;
-export POSTGRESS_HOST=udagramdemo.abc4def.us-east-2.rds.amazonaws.com;
-export AWS_REGION=us-east-2;
-export AWS_PROFILE=default;
-export AWS_BUCKET=udagramdemo;
-export JWT_SECRET=helloworld;
-```
 
-#### 2-1. In containers on your local machine
-from udacity-c3-deployment/docker folder run
+
+#### 2-1. In container on your local machine
 ```
-docker-compose -f docker-compose-build.yaml build --parallel
-docker-compose up
+docker run --publish 5000:5000 hebaayman77177/crop-weed-segmantation2:latest
 ```
+<img src="./screenshots/cont.png"><img>
 
 #### 2-2. In Kubernetes cluster
-first Create cluster ,
-alter your secrets in env-secret.yaml,aws-secret.yaml
+ - first Create cluster, i created a cluster with one master node and 2 worker nodes
+ - then create a deployment
 
-from udacity-c3-deployment/k8s
+  ```
+   kubectl create deployment crop-weed-segmantation --image=hebaayman77177/crop-weed-segmantation2:latest
+  ```
+   this will create a deployment with one pod you can scale it
+   ```
+   kubectl scale deployment/crop-weed-segmantation --replicas=3
+   ```
 
-```
-kubectl apply -f backend-feed-deployment.yaml
 
-kubectl apply -f backend-user-deployment.yaml
+   - then create a service
+   ```
+   kubectl expose deployment/crop-weed-segmantation --port 5000
+   ```
 
-kubectl apply -f frontend-deployment.yaml
 
-kubectl apply -f reverseproxy-deployment.yaml
+  - then run the service
+  ```
+  kubectl port-forward service/crop-weed-segmantation 5000:5000
+  ```
 
-kubectl apply -f pod-example/pod.yaml
+  i have included a postman file that contain the request, you should get a 3d array of the segmented image
 
-kubectl apply -f backend-feed-service.yaml
-
-kubectl apply -f backend-user-service.yaml
-
-kubectl apply -f frontend-service.yaml
-
-kubectl apply -f reverseproxy-service.yaml
-
-kubectl apply -f env-secret.yaml
-
-kubectl apply -f aws-secret.yaml
-
-kubectl apply -f env-configmap.yaml
-
-```
-then
-
-```
-kubectl port-forward service/reverseproxy 8080:8080
-kubectl port-forward service/frontend 8100:8100
-
-```
- ### Upgraded via rolling-update
-- first i changed the feed deployment
-
-- then deployed it
-- then i changed back to the old deployment
-
-<img src="./screenshots/rolling.png"><img>
 
  ### A/B deployment of the application
- - i made a new deployment of the feed
+ - i made a new deployment of the service
  - then deployed it
- - then i scaled down old feed deployment
+ - then i scaled down the old deployment
 
 
  <img src="./screenshots/ab.png"><img>
 
 
+ ### Upgraded via rolling-update
+- i can change the docker image of a deployment via rolling-update
+
+<img src="./screenshots/rolling2.png"><img>
+<img src="./screenshots/update.png"><img>
 
 
+ ## screenshots
 
-
-
-
-
-## Screenshots
-</n>
-
-
-
- <img src="./screenshots/hub.png"><img>
-
-  <img src="./screenshots/all.png"><img>
-
-  <img src="./screenshots/cluster.png"><img>
+ <img src="./screenshots/dep.png"><img>
+ <img src="./screenshots/run.png"><img>

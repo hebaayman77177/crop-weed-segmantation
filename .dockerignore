@@ -1,0 +1,9 @@
+__pycache__
+.DS_Store
+crop-weed-segmantation
+crop_weed_segmantation.ipynb
+.git
+.gitignore
+README.md
+crop-weed-segmantation.postman_collection.json
+screenshots
